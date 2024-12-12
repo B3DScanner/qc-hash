@@ -2,30 +2,50 @@ cmake_minimum_required(VERSION 3.24)
 
 project(qc-hash)
 
-# Fetch dependencies
-if(${PROJECT_IS_TOP_LEVEL})
-    include(FetchContent)
+cmake_minimum_required(VERSION 3.30)
+project(qc-hash VERSION 1.0.0 LANGUAGES CXX)
 
-    FetchContent_Declare(qc-cmake SOURCE_DIR ${CMAKE_SOURCE_DIR}/../qc-cmake)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_DEBUG_POSTFIX d)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-    FetchContent_Declare(qc-core SOURCE_DIR ${CMAKE_SOURCE_DIR}/../qc-core OVERRIDE_FIND_PACKAGE)
-
-    option(BUILD_GMOCK "" OFF)
-    option(INSTALL_GTEST "" OFF)
-    option(gtest_force_shared_crt "" ON)
-    FetchContent_Declare(GTest GIT_REPOSITORY https://github.com/google/googletest.git GIT_TAG v1.14.0 OVERRIDE_FIND_PACKAGE)
-
-    FetchContent_MakeAvailable(qc-cmake qc-core GTest)
+if(MSVC)
+    add_compile_options(/std:c++20)
 endif()
 
-set(QC_CXX_STANDARD 20)
+add_library(${PROJECT_NAME} INTERFACE)
 
-qc_setup_target(qc-hash INTERFACE_LIBRARY)
+file(GLOB HEADER_FILES "include/*.hpp")
+install(FILES ${HEADER_FILES} DESTINATION include)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
 
-if(${PROJECT_IS_TOP_LEVEL})
-    add_subdirectory(test EXCLUDE_FROM_ALL)
+install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}Targets
+    FILE_SET HEADERS
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include)
+	
+install(EXPORT ${PROJECT_NAME}Targets
+    FILE ${PROJECT_NAME}Targets.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION lib/cmake/${PROJECT_NAME})	
+	
+set(GENERATED_CONFIG_FILE_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake")
+	
+configure_file(
+"${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in"
+"${GENERATED_CONFIG_FILE_DIR}"
+@ONLY
+)
 
-    # TEMPORARILY OUT OF COMMISSION
-    # WILL SWITCH TO GOOGLE BENCHMARK SOON
-    #add_subdirectory(benchmark EXCLUDE_FROM_ALL)
-endif()
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${PROJECT_NAME}ConfigVersion.cmake"
+    VERSION ${MC_VERSION}
+    COMPATIBILITY AnyNewerVersion)
+
+install(FILES "${GENERATED_CONFIG_FILE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    DESTINATION lib/cmake/${PROJECT_NAME})	
