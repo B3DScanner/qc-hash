@@ -17,8 +17,8 @@ if(MSVC)
     add_compile_options(/std:c++20)
 endif()
 
-add_library(${PROJECT_NAME} INTERFACE)
-target_link_libraries(${PROJECT_NAME} INTERFACE version::version)
+add_library(${PROJECT_NAME} STATIC ${CMAKE_CURRENT_SOURCE_DIR}/srcs/main.cpp)
+target_link_libraries(${PROJECT_NAME} version::version)
 
 file(GLOB HEADER_FILES "include/*.hpp")
 install(FILES ${HEADER_FILES} DESTINATION include)
